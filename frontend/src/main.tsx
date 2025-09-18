@@ -5,7 +5,9 @@ import Login from "./pages/Login";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
 import MenuManager from "./pages/MenuManager";
-import RestaurantList from "./pages/RestaurantList"; // new public listing page
+import RestaurantList from "./pages/RestaurantList";
+import CustomerMenu from "./pages/CustomerMenu";
+import TableReservation from "./pages/TableReservation";
 import { setToken } from "./api";
 import React from "react";
 import "./index.css";
@@ -25,8 +27,7 @@ createRoot(document.getElementById("root")!).render(
             {/* Public landing page: restaurant list */}
             <Route index element={<RestaurantList />} />
 
-            {/* <Route index element={<Navigate to="/admin-login" />} /> */}
-
+            {/* Admin login */}
             <Route path="admin-login" element={<Login />} />
 
             {/* Super admin dashboard */}
@@ -39,11 +40,30 @@ createRoot(document.getElementById("root")!).render(
               }
             />
 
-            {/* Restaurant dashboard (for a specific restaurant’s staff, optional) */}
-            <Route path="restaurant" element={<RestaurantDashboard />} />
+            {/* Restaurant dashboard (for a specific restaurant's staff) */}
+            <Route 
+              path="restaurant-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <RestaurantDashboard />
+                </ProtectedRoute>
+              } 
+            />
 
-            {/* Menu manager (per restaurant) */}
-            <Route path="restaurant/:id/menu" element={<MenuManager />} />
+            {/* Menu manager (per restaurant) - Protected route for restaurant staff */}
+            <Route 
+              path="restaurant/:id/admin/menu" 
+              element={
+                <ProtectedRoute>
+                  <MenuManager />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Public customer-facing pages */}
+            <Route path="restaurant/:restaurantId/menu" element={<CustomerMenu />} />
+            <Route path="restaurant/:restaurantId/reserve" element={<TableReservation />} />
+            <Route path="restaurant/:restaurantId/table/:tableId/menu" element={<CustomerMenu />} />
 
             {/* Catch-all fallback */}
             <Route path="*" element={<Navigate to="/" />} />
