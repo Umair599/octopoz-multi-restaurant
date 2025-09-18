@@ -141,12 +141,12 @@ export default function RestaurantList() {
                 >
                   <div className="relative h-48">
                     <img
-                      src={restaurant.logo_url || '/api/placeholder/400/200'}
+                      src={restaurant.logo_url || 'https://dummyimage.com/400x200/e5e7eb/9ca3af&text=Restaurant'}
                       alt={restaurant.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = `https://via.placeholder.com/400x200/f3f4f6/9ca3af?text=${encodeURIComponent(restaurant.name)}`;
+                        target.src = `https://dummyimage.com/400x200/f3f4f6/9ca3af&text=${encodeURIComponent(restaurant.name)}`;
                       }}
                     />
                     <div className="absolute top-4 right-4">

@@ -28,7 +28,7 @@ async function seed() {
         phone: "+1 (555) 123-4567",
         email: "contact@demopizza.com",
         description: "Authentic Italian pizza made with fresh ingredients",
-        logo_url: "https://via.placeholder.com/200x200/ff6b6b/ffffff?text=Pizza",
+        logo_url: "https://dummyimage.com/200x200/ff6b6b/ffffff&text=Pizza",
         status: "active",
         gst_settings: JSON.stringify({ default_rate: 8.25, apply_to_all: true }),
         operating_hours: JSON.stringify({
@@ -50,7 +50,7 @@ async function seed() {
         phone: "+1 (555) 234-5678",
         email: "info@burgerbarn.com",
         description: "Gourmet burgers and craft beer in a rustic setting",
-        logo_url: "https://via.placeholder.com/200x200/4ecdc4/ffffff?text=Burger",
+        logo_url: "https://dummyimage.com/200x200/4ecdc4/ffffff&text=Burger",
         status: "active",
         gst_settings: JSON.stringify({ default_rate: 9.5, apply_to_all: true }),
         operating_hours: JSON.stringify({
@@ -72,7 +72,7 @@ async function seed() {
         phone: "+1 (555) 345-6789",
         email: "hello@sakurasushi.com",
         description: "Fresh sushi and traditional Japanese cuisine",
-        logo_url: "https://via.placeholder.com/200x200/ff9ff3/ffffff?text=Sushi",
+        logo_url: "https://dummyimage.com/200x200/ff9ff3/ffffff&text=Sushi",
         status: "active",
         gst_settings: JSON.stringify({ default_rate: 8.75, apply_to_all: true }),
         operating_hours: JSON.stringify({
@@ -155,7 +155,7 @@ async function seed() {
         name: "Garlic Bread",
         description: "Fresh baked bread with garlic butter and herbs",
         price_cents: 799,
-        images: JSON.stringify(["https://via.placeholder.com/300x200/ffd93d/6c5ce7?text=Garlic+Bread"]),
+        images: JSON.stringify(["https://dummyimage.com/300x200/ffd93d/6c5ce7&text=Garlic+Bread"]),
         prep_time_minutes: 10,
         gst_rate: 8.25,
         sort_order: 1
@@ -167,7 +167,7 @@ async function seed() {
         name: "Margherita Pizza",
         description: "Classic pizza with tomato sauce, mozzarella, and fresh basil",
         price_cents: 1599,
-        images: JSON.stringify(["https://via.placeholder.com/300x200/ff6b6b/ffffff?text=Margherita"]),
+        images: JSON.stringify(["https://dummyimage.com/300x200/ff6b6b/ffffff&text=Margherita"]),
         prep_time_minutes: 15,
         gst_rate: 8.25,
         sort_order: 1,
@@ -180,7 +180,7 @@ async function seed() {
         name: "Pepperoni Pizza",
         description: "Classic pepperoni with mozzarella cheese",
         price_cents: 1899,
-        images: JSON.stringify(["https://via.placeholder.com/300x200/ff4757/ffffff?text=Pepperoni"]),
+        images: JSON.stringify(["https://dummyimage.com/300x200/ff4757/ffffff&text=Pepperoni"]),
         prep_time_minutes: 15,
         gst_rate: 8.25,
         sort_order: 2
@@ -192,7 +192,7 @@ async function seed() {
         name: "Spaghetti Carbonara",
         description: "Traditional carbonara with eggs, cheese, and pancetta",
         price_cents: 1399,
-        images: JSON.stringify(["https://via.placeholder.com/300x200/fdcb6e/2d3436?text=Carbonara"]),
+        images: JSON.stringify(["https://dummyimage.com/300x200/fdcb6e/2d3436&text=Carbonara"]),
         prep_time_minutes: 12,
         gst_rate: 8.25,
         sort_order: 1

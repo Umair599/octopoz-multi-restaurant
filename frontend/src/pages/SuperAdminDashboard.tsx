@@ -364,12 +364,12 @@ export default function SuperAdminDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <img
-                                src={restaurant.logo_url || '/api/placeholder/40/40'}
+                                src={restaurant.logo_url || 'https://dummyimage.com/40x40/e5e7eb/9ca3af&text=R'}
                                 alt={restaurant.name}
                                 className="h-10 w-10 rounded-full object-cover"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.src = `https://via.placeholder.com/40x40/f3f4f6/9ca3af?text=${encodeURIComponent(restaurant.name.charAt(0))}`;
+                                  target.src = `https://dummyimage.com/40x40/f3f4f6/9ca3af&text=${encodeURIComponent(restaurant.name.charAt(0))}`;
                                 }}
                               />
                               <div className="ml-4">

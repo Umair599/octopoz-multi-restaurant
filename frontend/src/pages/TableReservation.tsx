@@ -154,7 +154,7 @@ export default function TableReservation() {
               </Link>
               <div className="flex items-center space-x-3">
                 <img
-                  src={restaurant.logo_url || '/api/placeholder/40/40'}
+                  src={restaurant.logo_url || 'https://dummyimage.com/40x40/e5e7eb/9ca3af&text=R'}
                   alt={restaurant.name}
                   className="h-10 w-10 rounded-full object-cover"
                 />
