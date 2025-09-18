@@ -10,8 +10,13 @@ export async function login(email: string, password: string) {
 }
 
 export function setToken(t: string | null) {
-  if (t) API.defaults.headers.common["Authorization"] = `Bearer ${t}`;
-  else delete API.defaults.headers.common["Authorization"];
+  if (t) {
+    API.defaults.headers.common["Authorization"] = `Bearer ${t}`;
+    localStorage.setItem("token", t);
+  } else delete API.defaults.headers.common["Authorization"];
 }
-
+export function clearToken() {
+  localStorage.removeItem("token");
+  delete API.defaults.headers.common["Authorization"];
+}
 export default API;

@@ -1,10 +1,10 @@
-import express from "express";
+import { Router } from "express";
 import db from "../db";
 import { v4 as uuidv4 } from "uuid";
 import { hash, compare } from "../utils";
 import { sign } from "../auth/jwt";
 
-const router = express.Router();
+const router = Router();
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
