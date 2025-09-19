@@ -18,8 +18,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantsRoutes);
-app.use("/api", menuRoutes);
 app.use("/api", ordersRoutes);
+app.use("/api", menuRoutes);
 app.use("/api/uploads", uploadsRoutes);
 app.use("/api", promotionsRoutes);
 app.use("/api", reservationsRoutes);

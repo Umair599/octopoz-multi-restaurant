@@ -83,6 +83,29 @@ router.get("/by-subdomain/:subdomain/menu", async (req, res) => {
   });
 });
 
+// Get restaurant by ID (public route)
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  
+  const restaurant = await db("restaurants")
+    .where({ id, status: "active" })
+    .first();
+    
+  if (!restaurant) {
+    return res.status(404).json({ error: "Restaurant not found" });
+  }
+  
+  // Parse JSON fields
+  restaurant.operating_hours = typeof restaurant.operating_hours === 'string' 
+    ? JSON.parse(restaurant.operating_hours || '{}') 
+    : restaurant.operating_hours;
+  restaurant.gst_settings = typeof restaurant.gst_settings === 'string' 
+    ? JSON.parse(restaurant.gst_settings || '{}') 
+    : restaurant.gst_settings;
+  
+  res.json(restaurant);
+});
+
 router.use(authMiddleware);
 
 // create restaurant (super only)

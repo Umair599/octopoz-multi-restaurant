@@ -11,12 +11,10 @@ import {
   CalendarIcon,
   TagIcon,
   DocumentArrowDownIcon,
-  EyeIcon,
   PhotoIcon,
   UsersIcon,
-  BuildingStorefrontIcon,
-  PlusIcon,
-  PencilIcon
+  PencilIcon,
+  ArrowRightStartOnRectangleIcon
 } from "@heroicons/react/24/outline";
 import QRCodeGenerator from "../components/QRCodeGenerator";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -68,7 +66,7 @@ interface UserFormData {
 }
 
 export default function RestaurantDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -295,6 +293,13 @@ export default function RestaurantDashboard() {
               >
                 <QrCodeIcon className="h-5 w-5 mr-2" />
                 Show QR Codes
+              </button>
+              <button
+                onClick={logout}
+                className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                <ArrowRightStartOnRectangleIcon className="h-5 w-5 mr-2" />
+                Sign Out
               </button>
             </div>
           </div>

@@ -51,6 +51,11 @@ export default function CustomerMenu() {
   useEffect(() => {
     if (restaurantId) {
       fetchMenu();
+      // Load cart from localStorage
+      const savedCart = localStorage.getItem(`cart_${restaurantId}`);
+      if (savedCart) {
+        setCart(JSON.parse(savedCart));
+      }
     }
   }, [restaurantId]);
 
@@ -76,28 +81,36 @@ export default function CustomerMenu() {
 
   const addToCart = (item: MenuItem) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
+    let updatedCart;
     
     if (existingItem) {
-      setCart(cart.map(cartItem =>
+      updatedCart = cart.map(cartItem =>
         cartItem.id === item.id
           ? { ...cartItem, quantity: cartItem.quantity + 1 }
           : cartItem
-      ));
+      );
     } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
+      updatedCart = [...cart, { ...item, quantity: 1 }];
     }
     
+    setCart(updatedCart);
+    localStorage.setItem(`cart_${restaurantId}`, JSON.stringify(updatedCart));
     toast.success(`${item.name} added to cart`);
   };
 
   const updateCartQuantity = (itemId: string, newQuantity: number) => {
+    let updatedCart;
+    
     if (newQuantity === 0) {
-      setCart(cart.filter(item => item.id !== itemId));
+      updatedCart = cart.filter(item => item.id !== itemId);
     } else {
-      setCart(cart.map(item =>
+      updatedCart = cart.map(item =>
         item.id === itemId ? { ...item, quantity: newQuantity } : item
-      ));
+      );
     }
+    
+    setCart(updatedCart);
+    localStorage.setItem(`cart_${restaurantId}`, JSON.stringify(updatedCart));
   };
 
   const getTotalPrice = () => {

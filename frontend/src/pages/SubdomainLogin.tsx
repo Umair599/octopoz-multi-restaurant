@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 interface Restaurant {
@@ -133,10 +133,10 @@ export default function SubdomainLogin() {
             />
           )}
           <h2 className="text-3xl font-extrabold text-gray-900">
-            {restaurant?.name || 'Restaurant'} Admin
+            {restaurant?.name || 'Restaurant'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to your restaurant admin account
+            Sign in to your restaurant account
           </p>
         </div>
       </div>
@@ -210,12 +210,12 @@ export default function SubdomainLogin() {
             </div>
 
             <div className="mt-6">
-              <a
-                href="/menu"
+              <Link
+                to="/"
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
                 View Menu
-              </a>
+              </Link>
             </div>
           </div>
         </div>

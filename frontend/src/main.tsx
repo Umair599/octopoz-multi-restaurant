@@ -10,6 +10,8 @@ import CustomerMenu from "./pages/CustomerMenu";
 import TableReservation from "./pages/TableReservation";
 import SubdomainLogin from "./pages/SubdomainLogin";
 import PublicMenu from "./pages/PublicMenu";
+import Cart from "./pages/Cart";
+import OrderConfirmation from "./pages/OrderConfirmation";
 import { setToken } from "./api";
 import React from "react";
 import "./index.css";
@@ -46,8 +48,11 @@ function AppRouter() {
   if (subdomain) {
     return (
       <Routes>
-        <Route path="/" element={<SubdomainLogin />} />
+        <Route path="/" element={<PublicMenu />} />
+        <Route path="/login" element={<SubdomainLogin />} />
         <Route path="/menu" element={<PublicMenu />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
         <Route path="/restaurant" element={
           <ProtectedRoute>
             <RestaurantDashboard />
@@ -105,6 +110,8 @@ function AppRouter() {
 
         {/* Public customer-facing pages */}
         <Route path="restaurant/:restaurantId/menu" element={<CustomerMenu />} />
+        <Route path="restaurant/:restaurantId/cart" element={<Cart />} />
+        <Route path="restaurant/:restaurantId/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
         <Route path="restaurant/:restaurantId/reserve" element={<TableReservation />} />
         <Route path="restaurant/:restaurantId/table/:tableId/menu" element={<CustomerMenu />} />
 

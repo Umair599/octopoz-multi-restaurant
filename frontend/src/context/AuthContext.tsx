@@ -20,8 +20,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     clearToken();
-    navigate("/admin-login");
     setAuth(false);
+    
+    // Check if we're on a subdomain
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    const isSubdomain = hostname.includes('.localhost') ? parts[0] !== 'localhost' : parts.length > 2;
+    
+    if (isSubdomain) {
+      // Redirect to subdomain login page
+      navigate("/");
+    } else {
+      // Redirect to main admin login
+      navigate("/admin-login");
+    }
   };
 
   return (

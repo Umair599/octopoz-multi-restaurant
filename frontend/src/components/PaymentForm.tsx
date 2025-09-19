@@ -22,7 +22,9 @@ interface PaymentFormProps {
 
 export default function PaymentForm({ amount, onPaymentSuccess, onCancel }: PaymentFormProps) {
   const [processing, setProcessing] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<PaymentFormData>();
+  const [cardType, setCardType] = useState<string>('');
+  const [cardNumber, setCardNumber] = useState('');
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<PaymentFormData>();
 
   const onSubmit = async (data: PaymentFormData) => {
     setProcessing(true);
@@ -44,11 +46,53 @@ export default function PaymentForm({ amount, onPaymentSuccess, onCancel }: Paym
     }
   };
 
+  const detectCardType = (number: string) => {
+    const digits = number.replace(/\D/g, '');
+    
+    if (/^4/.test(digits)) return 'visa';
+    if (/^5[1-5]/.test(digits)) return 'mastercard';
+    if (/^3[47]/.test(digits)) return 'amex';
+    if (/^6(?:011|5)/.test(digits)) return 'discover';
+    if (/^3[0689]/.test(digits)) return 'diners';
+    if (/^(?:2131|1800|35\d{3})/.test(digits)) return 'jcb';
+    
+    return '';
+  };
+
   const formatCardNumber = (value: string) => {
     // Remove all non-digit characters
     const digits = value.replace(/\D/g, '');
     // Add spaces every 4 digits
     return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formatted = formatCardNumber(value);
+    const detectedType = detectCardType(value);
+    
+    setCardNumber(formatted);
+    setCardType(detectedType);
+    setValue('card_number', formatted);
+  };
+
+  const getCardTypeIcon = () => {
+    switch (cardType) {
+      case 'visa':
+        return <span className="text-blue-600 font-bold">VISA</span>;
+      case 'mastercard':
+        return <span className="text-red-600 font-bold">MC</span>;
+      case 'amex':
+        return <span className="text-green-600 font-bold">AMEX</span>;
+      case 'discover':
+        return <span className="text-orange-600 font-bold">DISCOVER</span>;
+      case 'diners':
+        return <span className="text-purple-600 font-bold">DINERS</span>;
+      case 'jcb':
+        return <span className="text-pink-600 font-bold">JCB</span>;
+      default:
+        return <CreditCardIcon className="h-5 w-5 text-gray-400" />;
+    }
   };
 
   const currentYear = new Date().getFullYear();
@@ -81,22 +125,26 @@ export default function PaymentForm({ amount, onPaymentSuccess, onCancel }: Paym
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Card Number *
           </label>
-          <input
-            {...register('card_number', { 
-              required: 'Card number is required',
-              pattern: {
-                value: /^[0-9\s]{13,19}$/,
-                message: 'Invalid card number'
-              }
-            })}
-            type="text"
-            maxLength={19}
-            placeholder="1234 5678 9012 3456"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={(e) => {
-              e.target.value = formatCardNumber(e.target.value);
-            }}
-          />
+          <div className="relative">
+            <input
+              {...register('card_number', { 
+                required: 'Card number is required',
+                pattern: {
+                  value: /^[0-9\s]{13,19}$/,
+                  message: 'Invalid card number'
+                }
+              })}
+              type="text"
+              value={cardNumber}
+              onChange={handleCardNumberChange}
+              maxLength={19}
+              placeholder="1234 5678 9012 3456"
+              className="w-full px-3 py-2 pr-20 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              {getCardTypeIcon()}
+            </div>
+          </div>
           {errors.card_number && (
             <p className="text-red-600 text-sm mt-1">{errors.card_number.message}</p>
           )}
