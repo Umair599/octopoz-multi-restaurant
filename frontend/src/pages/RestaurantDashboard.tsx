@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import ImageUpload from "../components/ImageUpload";
 import API from "../api";
 import { 
   ChartBarIcon,
@@ -10,11 +11,17 @@ import {
   CalendarIcon,
   TagIcon,
   DocumentArrowDownIcon,
-  EyeIcon
+  EyeIcon,
+  PhotoIcon,
+  UsersIcon,
+  BuildingStorefrontIcon,
+  PlusIcon,
+  PencilIcon
 } from "@heroicons/react/24/outline";
 import QRCodeGenerator from "../components/QRCodeGenerator";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import toast from 'react-hot-toast';
+import { useForm } from 'react-hook-form';
 
 interface Restaurant {
   id: string;
@@ -42,6 +49,24 @@ interface DashboardStats {
   completedOrders: number;
 }
 
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  restaurant_id?: string;
+  first_name?: string;
+  last_name?: string;
+  created_at: string;
+}
+
+interface UserFormData {
+  email: string;
+  password: string;
+  role: string;
+  first_name: string;
+  last_name: string;
+}
+
 export default function RestaurantDashboard() {
   const { user } = useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -56,9 +81,26 @@ export default function RestaurantDashboard() {
   const [showQRCode, setShowQRCode] = useState(false);
   const [tables, setTables] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    description: '',
+    logo_url: ''
+  });
+  const [staff, setStaff] = useState<User[]>([]);
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<User | null>(null);
+
+  const { register: registerStaff, handleSubmit: handleSubmitStaff, reset: resetStaff, setValue: setValueStaff, formState: { errors: errorsStaff } } = useForm<UserFormData>();
 
   useEffect(() => {
     fetchDashboardData();
+    if (user?.role === 'restaurant_admin') {
+      fetchStaff();
+    }
   }, []);
 
   const fetchDashboardData = async () => {
@@ -72,6 +114,16 @@ export default function RestaurantDashboard() {
       setRestaurant(restaurantRes.data);
       setRecentOrders(ordersRes.data);
       setTables(tablesRes.data);
+      
+      // Populate profile data
+      setProfileData({
+        name: restaurantRes.data.name || '',
+        address: restaurantRes.data.address || '',
+        phone: restaurantRes.data.phone || '',
+        email: restaurantRes.data.email || '',
+        description: restaurantRes.data.description || '',
+        logo_url: restaurantRes.data.logo_url || ''
+      });
 
       // Calculate stats
       const today = new Date().toISOString().split('T')[0];
@@ -105,6 +157,95 @@ export default function RestaurantDashboard() {
     } catch (error) {
       toast.error('Failed to update order status');
     }
+  };
+
+  const handleProfileUpdate = async () => {
+    try {
+      await API.patch(`/restaurants/${user?.restaurant_id}/profile`, profileData);
+      toast.success('Profile updated successfully');
+      setEditingProfile(false);
+      fetchDashboardData();
+    } catch (error) {
+      toast.error('Failed to update profile');
+    }
+  };
+
+  const handleLogoUpload = async (url: string) => {
+    try {
+      await API.patch(`/restaurants/${user?.restaurant_id}/logo`, { logo_url: url });
+      toast.success('Logo updated successfully');
+      setProfileData(prev => ({ ...prev, logo_url: url }));
+      fetchDashboardData();
+    } catch (error) {
+      toast.error('Failed to update logo');
+    }
+  };
+
+  const handleProfileInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Staff Management Functions
+  const fetchStaff = async () => {
+    try {
+      const res = await API.get("/auth/users");
+      // Filter to only show staff for this restaurant
+      const restaurantStaff = res.data.filter((u: User) => 
+        u.restaurant_id === user?.restaurant_id && u.role === 'restaurant_staff'
+      );
+      setStaff(restaurantStaff);
+    } catch (error) {
+      toast.error('Failed to fetch staff');
+    }
+  };
+
+  const onSubmitStaff = async (data: UserFormData) => {
+    try {
+      const staffData = {
+        ...data,
+        role: 'restaurant_staff',
+        restaurant_id: user?.restaurant_id
+      };
+
+      if (editingStaff) {
+        await API.patch(`/auth/users/${editingStaff.id}`, staffData);
+        toast.success('Staff member updated successfully');
+        setEditingStaff(null);
+      } else {
+        await API.post("/auth/users", staffData);
+        toast.success('Staff member added successfully');
+        setIsAddingStaff(false);
+      }
+      resetStaff();
+      fetchStaff();
+    } catch (error) {
+      toast.error('Operation failed');
+    }
+  };
+
+  const startEditStaff = (staff: User) => {
+    setEditingStaff(staff);
+    setValueStaff('email', staff.email);
+    setValueStaff('first_name', staff.first_name || '');
+    setValueStaff('last_name', staff.last_name || '');
+  };
+
+  const deleteStaff = async (staffId: string) => {
+    if (!confirm('Are you sure you want to remove this staff member?')) return;
+    
+    try {
+      await API.delete(`/auth/users/${staffId}`);
+      toast.success('Staff member removed successfully');
+      fetchStaff();
+    } catch (error) {
+      toast.error('Failed to remove staff member');
+    }
+  };
+
+  const cancelStaffEdit = () => {
+    setEditingStaff(null);
+    setIsAddingStaff(false);
+    resetStaff();
   };
 
   const generateEODReport = async () => {
@@ -272,6 +413,28 @@ export default function RestaurantDashboard() {
               >
                 Management
               </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'profile'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Profile
+              </button>
+              {user?.role === 'restaurant_admin' && (
+                <button
+                  onClick={() => setActiveTab('staff')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'staff'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Staff Management
+                </button>
+              )}
             </nav>
           </div>
 
@@ -434,6 +597,367 @@ export default function RestaurantDashboard() {
                     <h4 className="text-lg font-medium text-gray-900 mb-2">Reservations</h4>
                     <p className="text-gray-600">View and manage table reservations</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'profile' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-medium text-gray-900">Restaurant Profile</h3>
+                  <button
+                    onClick={() => setEditingProfile(!editingProfile)}
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <PencilIcon className="h-5 w-5 mr-2" />
+                    {editingProfile ? 'Cancel' : 'Edit Profile'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Profile Information */}
+                  <div className="space-y-6">
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <h4 className="text-md font-medium text-gray-900 mb-4">Basic Information</h4>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Restaurant Name
+                          </label>
+                          {editingProfile ? (
+                            <input
+                              type="text"
+                              value={profileData.name}
+                              onChange={(e) => handleProfileInputChange('name', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <p className="text-gray-900">{restaurant?.name || 'Not set'}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Address
+                          </label>
+                          {editingProfile ? (
+                            <textarea
+                              value={profileData.address}
+                              onChange={(e) => handleProfileInputChange('address', e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <p className="text-gray-900">{restaurant?.address || 'Not set'}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Phone
+                          </label>
+                          {editingProfile ? (
+                            <input
+                              type="tel"
+                              value={profileData.phone}
+                              onChange={(e) => handleProfileInputChange('phone', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <p className="text-gray-900">{restaurant?.phone || 'Not set'}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email
+                          </label>
+                          {editingProfile ? (
+                            <input
+                              type="email"
+                              value={profileData.email}
+                              onChange={(e) => handleProfileInputChange('email', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <p className="text-gray-900">{restaurant?.email || 'Not set'}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Description
+                          </label>
+                          {editingProfile ? (
+                            <textarea
+                              value={profileData.description}
+                              onChange={(e) => handleProfileInputChange('description', e.target.value)}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          ) : (
+                            <p className="text-gray-900">{restaurant?.description || 'Not set'}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {editingProfile && (
+                        <div className="mt-6 flex justify-end space-x-3">
+                          <button
+                            onClick={() => setEditingProfile(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleProfileUpdate}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Logo Management */}
+                  <div className="space-y-6">
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <h4 className="text-md font-medium text-gray-900 mb-4">Restaurant Logo</h4>
+                      
+                      <div className="text-center">
+                        {restaurant?.logo_url ? (
+                          <div className="mb-4">
+                            <img
+                              src={restaurant.logo_url}
+                              alt="Restaurant Logo"
+                              className="h-32 w-32 object-cover rounded-lg mx-auto border-2 border-gray-200"
+                            />
+                          </div>
+                        ) : (
+                          <div className="mb-4">
+                            <div className="h-32 w-32 bg-gray-100 rounded-lg mx-auto border-2 border-dashed border-gray-300 flex items-center justify-center">
+                              <PhotoIcon className="h-12 w-12 text-gray-400" />
+                            </div>
+                          </div>
+                        )}
+                        
+                        <ImageUpload
+                          onImageUploaded={handleLogoUpload}
+                          currentImage={restaurant?.logo_url}
+                          label="Upload new logo"
+                          className="max-w-sm mx-auto"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <h4 className="text-md font-medium text-gray-900 mb-4">Quick Stats</h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Status:</span>
+                          <span className={`text-sm font-medium ${
+                            restaurant?.status === 'active' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {restaurant?.status || 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Monthly Capacity:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {restaurant?.monthly_capacity || 'Not set'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600">Tables:</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {tables.length}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'staff' && user?.role === 'restaurant_admin' && (
+              <div>
+                {/* Add/Edit Staff Form */}
+                {(isAddingStaff || editingStaff) && (
+                  <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      {editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
+                    </h3>
+                    
+                    <form onSubmit={handleSubmitStaff(onSubmitStaff)} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Email *
+                          </label>
+                          <input
+                            {...registerStaff('email', { required: 'Email is required' })}
+                            type="email"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="staff@example.com"
+                          />
+                          {errorsStaff.email && (
+                            <p className="text-red-600 text-sm mt-1">{errorsStaff.email.message}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            First Name
+                          </label>
+                          <input
+                            {...registerStaff('first_name')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="John"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Last Name
+                          </label>
+                          <input
+                            {...registerStaff('last_name')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Doe"
+                          />
+                        </div>
+                        
+                        {!editingStaff && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Password *
+                            </label>
+                            <input
+                              {...registerStaff('password', { required: !editingStaff ? 'Password is required' : false })}
+                              type="password"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Password"
+                            />
+                            {errorsStaff.password && (
+                              <p className="text-red-600 text-sm mt-1">{errorsStaff.password.message}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          onClick={cancelStaffEdit}
+                          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {editingStaff ? 'Update Staff' : 'Add Staff'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Staff List */}
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-medium text-gray-900">Staff Members</h3>
+                  {!isAddingStaff && !editingStaff && (
+                    <button
+                      onClick={() => setIsAddingStaff(true)}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <UsersIcon className="h-5 w-5 mr-2" />
+                      Add Staff Member
+                    </button>
+                  )}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Staff Member
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Role
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Added
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {staff.map((staffMember) => (
+                        <tr key={staffMember.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {staffMember.first_name && staffMember.last_name 
+                                ? `${staffMember.first_name} ${staffMember.last_name}` 
+                                : staffMember.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {staffMember.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              Staff
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(staffMember.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => startEditStaff(staffMember)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteStaff(staffMember.id)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Remove"
+                              >
+                                <UsersIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  
+                  {staff.length === 0 && (
+                    <div className="text-center py-8">
+                      <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No staff members added yet</p>
+                      <button
+                        onClick={() => setIsAddingStaff(true)}
+                        className="mt-2 text-blue-600 hover:text-blue-500"
+                      >
+                        Add your first staff member
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

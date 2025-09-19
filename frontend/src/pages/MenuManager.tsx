@@ -68,6 +68,7 @@ export default function MenuManager() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [restaurant, setRestaurant] = useState<any>(null);
+  const [itemImages, setItemImages] = useState<string[]>([]);
 
   const { register: registerItem, handleSubmit: handleSubmitItem, reset: resetItem, setValue: setValueItem, formState: { errors: errorsItem } } = useForm<MenuItemFormData>();
   const { register: registerCategory, handleSubmit: handleSubmitCategory, reset: resetCategory, setValue: setValueCategory, formState: { errors: errorsCategory } } = useForm<CategoryFormData>();
@@ -111,6 +112,7 @@ export default function MenuManager() {
         gst_rate: Number(data.gst_rate),
         allergens: data.allergens ? data.allergens.split(',').map(s => s.trim()) : [],
         dietary_info: data.dietary_info ? data.dietary_info.split(',').map(s => s.trim()) : [],
+        images: itemImages
       };
 
       if (editingItem) {
@@ -123,6 +125,7 @@ export default function MenuManager() {
         setIsAddingItem(false);
       }
       resetItem();
+      setItemImages([]);
       fetchMenuData();
     } catch (error) {
       toast.error('Operation failed');
@@ -207,6 +210,7 @@ export default function MenuManager() {
     setValueItem('gst_rate', item.gst_rate || 0);
     setValueItem('allergens', item.allergens?.join(', ') || '');
     setValueItem('dietary_info', item.dietary_info?.join(', ') || '');
+    setItemImages(item.images || []);
   };
 
   const startEditCategory = (category: Category) => {
@@ -222,6 +226,15 @@ export default function MenuManager() {
     setIsAddingCategory(false);
     resetItem();
     resetCategory();
+    setItemImages([]);
+  };
+
+  const handleImagesUploaded = (urls: string[]) => {
+    setItemImages(prev => [...prev, ...urls]);
+  };
+
+  const removeImage = (index: number) => {
+    setItemImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const filteredItems = selectedCategory 
@@ -404,6 +417,39 @@ export default function MenuManager() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="e.g., vegan, vegetarian, gluten-free"
                         />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Item Images
+                        </label>
+                        <ImageUpload
+                          multiple
+                          maxImages={3}
+                          onImagesUploaded={handleImagesUploaded}
+                          label="Upload item images (max 3)"
+                        />
+                        
+                        {itemImages.length > 0 && (
+                          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {itemImages.map((imageUrl, index) => (
+                              <div key={index} className="relative">
+                                <img
+                                  src={imageUrl}
+                                  alt={`Item image ${index + 1}`}
+                                  className="w-full h-24 object-cover rounded-lg"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(index)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       
                       <div className="flex justify-end space-x-3">

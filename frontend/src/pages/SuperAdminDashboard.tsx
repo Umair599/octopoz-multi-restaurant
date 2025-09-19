@@ -1,6 +1,7 @@
 import API from "../api";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import ImageUpload from "../components/ImageUpload";
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -9,7 +10,10 @@ import {
   BuildingStorefrontIcon,
   ChartBarIcon,
   UsersIcon,
-  CogIcon
+  CogIcon,
+  UserPlusIcon,
+  ShieldCheckIcon,
+  PhotoIcon
 } from "@heroicons/react/24/outline";
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -51,6 +55,7 @@ export default function SuperAdminDashboard() {
     totalOrders: 0,
     totalRevenue: 0
   });
+  const [createdRestaurant, setCreatedRestaurant] = useState<any>(null);
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<RestaurantFormData>();
 
@@ -85,8 +90,9 @@ export default function SuperAdminDashboard() {
         toast.success('Restaurant updated successfully');
         setEditingRestaurant(null);
       } else {
-        await API.post("/restaurants", data);
+        const response = await API.post("/restaurants", data);
         toast.success('Restaurant added successfully');
+        setCreatedRestaurant(response.data);
         setIsAddingRestaurant(false);
       }
       reset();
@@ -125,6 +131,16 @@ export default function SuperAdminDashboard() {
     reset();
   };
 
+  const handleLogoUpload = async (restaurantId: string, url: string) => {
+    try {
+      await API.patch(`/restaurants/${restaurantId}/logo`, { logo_url: url });
+      toast.success('Logo updated successfully');
+      fetchRestaurants();
+    } catch (error) {
+      toast.error('Failed to update logo');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -160,7 +176,7 @@ export default function SuperAdminDashboard() {
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <UsersIcon className="h-8 w-8 text-purple-600" />
+              <ShieldCheckIcon className="h-8 w-8 text-indigo-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Orders</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
@@ -194,10 +210,71 @@ export default function SuperAdminDashboard() {
               >
                 Restaurant Management
               </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'settings'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                System Settings
+              </button>
             </nav>
           </div>
 
           <div className="p-6">
+            {/* Success Modal for Created Restaurant */}
+            {createdRestaurant && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Restaurant Created Successfully! 🎉
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Restaurant Details:</h4>
+                      <p><strong>Name:</strong> {createdRestaurant.name}</p>
+                      <p><strong>Subdomain:</strong> {createdRestaurant.subdomain}</p>
+                    </div>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Admin Login Credentials:</h4>
+                      <p><strong>Email:</strong> {createdRestaurant.admin_credentials?.email}</p>
+                      <p><strong>Password:</strong> {createdRestaurant.admin_credentials?.password}</p>
+                      <p className="text-sm text-blue-600 mt-2">
+                        Admin can login at: <strong>{createdRestaurant.subdomain}/login</strong>
+                      </p>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Public Menu:</h4>
+                      <p className="text-sm text-green-600">
+                        Customers can view the menu at: <strong>{createdRestaurant.subdomain}</strong>
+                      </p>
+                    </div>
+                    
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <p className="text-sm text-yellow-700">
+                        <strong>Important:</strong> Please save these credentials and share them with the restaurant admin. 
+                        The password cannot be recovered from this interface.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end mt-6">
+                    <button
+                      onClick={() => setCreatedRestaurant(null)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'overview' && (
               <div>
                 {/* Add/Edit Restaurant Form */}
@@ -236,12 +313,12 @@ export default function SuperAdminDashboard() {
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Logo URL
+                            Restaurant Logo
                           </label>
-                          <input
-                            {...register('logo_url')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="https://example.com/logo.png"
+                          <ImageUpload
+                            onImageUploaded={(url) => setValue('logo_url', url)}
+                            currentImage={editingRestaurant?.logo_url}
+                            label="Upload restaurant logo"
                           />
                         </div>
                         
@@ -423,6 +500,95 @@ export default function SuperAdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+
+            {activeTab === 'settings' && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-6">System Settings</h3>
+                
+                <div className="space-y-6">
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Platform Configuration</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Platform Name
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          defaultValue="Octopoz Multi-Restaurant"
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Support Email
+                        </label>
+                        <input
+                          type="email"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          defaultValue="support@octopoz.com"
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Access Control Settings</h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-900">Two-Factor Authentication</h5>
+                          <p className="text-sm text-gray-500">Require 2FA for all admin accounts</p>
+                        </div>
+                        <button className="bg-gray-200 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                          <span className="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-900">Session Timeout</h5>
+                          <p className="text-sm text-gray-500">Auto-logout after inactivity</p>
+                        </div>
+                        <select className="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                          <option>30 minutes</option>
+                          <option>1 hour</option>
+                          <option>2 hours</option>
+                          <option>4 hours</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-6 rounded-lg">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">System Status</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">99.9%</div>
+                        <div className="text-sm text-gray-600">Uptime</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">24/7</div>
+                        <div className="text-sm text-gray-600">Support</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">v2.1.0</div>
+                        <div className="text-sm text-gray-600">Version</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      Save Settings
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

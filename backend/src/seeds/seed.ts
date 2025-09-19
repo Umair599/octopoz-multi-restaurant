@@ -22,6 +22,7 @@ async function seed() {
       {
         id: pizzaRestId,
         name: "Demo Pizza Palace",
+        subdomain: "demopizzapalace",
         monthly_capacity: 1000,
         cuisine_type: "Italian",
         address: "123 Pizza Street, New York, NY 10001",
@@ -44,6 +45,7 @@ async function seed() {
       {
         id: burgerRestId,
         name: "Burger Barn",
+        subdomain: "burgerbarn",
         monthly_capacity: 800,
         cuisine_type: "American",
         address: "456 Burger Avenue, Los Angeles, CA 90210",
@@ -66,6 +68,7 @@ async function seed() {
       {
         id: sushiRestId,
         name: "Sakura Sushi",
+        subdomain: "sakurasushi",
         monthly_capacity: 600,
         cuisine_type: "Japanese",
         address: "789 Sushi Lane, San Francisco, CA 94102",
@@ -215,14 +218,14 @@ async function seed() {
 
     console.log("✅ Seed data created successfully!");
     console.log("\n🔑 Login credentials:");
-    console.log("Super Admin: super@octopoz.com / password");
-    console.log("Pizza Manager: admin@demopizza.com / password");
-    console.log("Burger Manager: admin@burgerbarn.com / password");
-    console.log("Sushi Manager: admin@sakurasushi.com / password");
+    console.log("Super Admin: super@octopoz.com / password (access at localhost:3000/admin-login)");
+    console.log("Pizza Manager: admin@demopizza.com / password (access at demopizzapalace.localhost:3000)");
+    console.log("Burger Manager: admin@burgerbarn.com / password (access at burgerbarn.localhost:3000)");
+    console.log("Sushi Manager: admin@sakurasushi.com / password (access at sakurasushi.localhost:3000)");
     console.log("\n🏪 Demo restaurants created:");
-    console.log("- Demo Pizza Palace (Italian)");
-    console.log("- Burger Barn (American)");
-    console.log("- Sakura Sushi (Japanese)");
+    console.log("- Demo Pizza Palace (Italian) - subdomain: demopizzapalace");
+    console.log("- Burger Barn (American) - subdomain: burgerbarn");
+    console.log("- Sakura Sushi (Japanese) - subdomain: sakurasushi");
 
   } catch (error) {
     console.error("Error seeding database:", error);
